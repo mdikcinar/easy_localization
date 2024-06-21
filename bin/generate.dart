@@ -81,6 +81,14 @@ ArgParser _generateArgParser(GenerateOptions? generateOptions) {
     help: 'If true - Skip unnecessary keys of nested objects.',
   );
 
+  parser.addOption(
+    'class-name',
+    abbr: 'c',
+    defaultsTo: 'LocaleKeys',
+    callback: (String? x) => generateOptions!.className = x!,
+    help: 'Custom class name for generated file',
+  );
+
   return parser;
 }
 
@@ -91,6 +99,7 @@ class GenerateOptions {
   String? outputDir;
   String? outputFile;
   String? format;
+  String? className;
   bool? skipUnnecessaryKeys;
 
   @override
@@ -106,6 +115,7 @@ void handleLangFiles(GenerateOptions options) async {
   final sourcePath = Directory(path.join(current.path, source.path));
   final outputPath =
       Directory(path.join(current.path, output.path, options.outputFile));
+  final className = options.className ?? 'LocaleKeys';
 
   if (!await sourcePath.exists()) {
     stderr.writeln('Source path does not exist');
@@ -126,7 +136,7 @@ void handleLangFiles(GenerateOptions options) async {
   }
 
   if (files.isNotEmpty) {
-    generateFile(files, outputPath, options);
+    generateFile(files, outputPath, options, className);
   } else {
     stderr.writeln('Source path empty');
   }
@@ -141,8 +151,12 @@ Future<List<FileSystemEntity>> dirContents(Directory dir) {
   return completer.future;
 }
 
-void generateFile(List<FileSystemEntity> files, Directory outputPath,
-    GenerateOptions options) async {
+void generateFile(
+  List<FileSystemEntity> files,
+  Directory outputPath,
+  GenerateOptions options,
+  String className,
+) async {
   var generatedFile = File(outputPath.path);
   if (!generatedFile.existsSync()) {
     generatedFile.createSync(recursive: true);
@@ -155,7 +169,8 @@ void generateFile(List<FileSystemEntity> files, Directory outputPath,
       await _writeJson(classBuilder, files);
       break;
     case 'keys':
-      await _writeKeys(classBuilder, files, options.skipUnnecessaryKeys);
+      await _writeKeys(
+          classBuilder, files, options.skipUnnecessaryKeys, className);
       break;
     // case 'csv':
     //   await _writeCsv(classBuilder, files);
@@ -170,12 +185,16 @@ void generateFile(List<FileSystemEntity> files, Directory outputPath,
   stdout.writeln('All done! File generated in ${outputPath.path}');
 }
 
-Future _writeKeys(StringBuffer classBuilder, List<FileSystemEntity> files,
-    bool? skipUnnecessaryKeys) async {
+Future _writeKeys(
+  StringBuffer classBuilder,
+  List<FileSystemEntity> files,
+  bool? skipUnnecessaryKeys,
+  String className,
+) async {
   var file = '''
 // DO NOT EDIT. This is code generated via package:easy_localization/generate.dart
 
-abstract class  LocaleKeys {
+abstract class  $className {
 ''';
 
   final fileData = File(files.first.path);
