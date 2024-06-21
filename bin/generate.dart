@@ -115,8 +115,6 @@ void handleLangFiles(GenerateOptions options) async {
   final sourcePath = Directory(path.join(current.path, source.path));
   final outputPath =
       Directory(path.join(current.path, output.path, options.outputFile));
-  final className = options.className ?? 'LocaleKeys';
-
   if (!await sourcePath.exists()) {
     stderr.writeln('Source path does not exist');
     return;
@@ -136,7 +134,7 @@ void handleLangFiles(GenerateOptions options) async {
   }
 
   if (files.isNotEmpty) {
-    generateFile(files, outputPath, options, className);
+    generateFile(files, outputPath, options);
   } else {
     stderr.writeln('Source path empty');
   }
@@ -155,8 +153,8 @@ void generateFile(
   List<FileSystemEntity> files,
   Directory outputPath,
   GenerateOptions options,
-  String className,
 ) async {
+  final className = options.className ?? 'LocaleKeys';
   var generatedFile = File(outputPath.path);
   if (!generatedFile.existsSync()) {
     generatedFile.createSync(recursive: true);
